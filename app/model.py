@@ -1,11 +1,9 @@
-import subprocess
-import json
+import requests
 
-def query_model(prompt: str, model: str = "llama3") -> str:
-    result = subprocess.run(
-        ["ollama", "run", model],
-        input=prompt.encode(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    return result.stdout.decode()
+def query_model(prompt: str, model: str = "wizardlm:13b-fp16") -> str:
+    response = requests.post("http://localhost:11434/api/generate", json={
+        "model": model,
+        "prompt": prompt,
+        "stream": False
+    })
+    return response.json()["response"]

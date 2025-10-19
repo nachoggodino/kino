@@ -2,11 +2,16 @@
 
 # === BACKEND ===
 run-back:
-	PYTHONPATH=./app uvicorn app.main:app --reload --port 8000
+	uvicorn app.main:app --reload --reload-dir app --port=8000
 
 # === FRONTEND ===
 run-front:
 	cd frontend && streamlit run main.py
+
+# === COMBINED ===
+kino:
+	@echo "🚀 Launching Kino: Backend + Frontend"
+	@make run-back & make run-front
 
 # === TESTS ===
 test:

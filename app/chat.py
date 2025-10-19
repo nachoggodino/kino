@@ -6,4 +6,4 @@ router = APIRouter()
 
 @router.post("/", response_model=ResponsePayload)
 def chat_endpoint(request: PromptRequest):
-    return handle_prompt(request.prompt)
+    return handle_prompt(request.prompt, request.model)
