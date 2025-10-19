@@ -1,3 +1,5 @@
 .venv/
 .vscode/
 .envrc
+__pycache__/
+.pytest_cache/
