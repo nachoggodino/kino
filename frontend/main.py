@@ -1,30 +1,58 @@
 import streamlit as st
 import requests
-import json
 
-BASE_URL = "http://localhost:8000"
+from frontend.models import MODEL_MAP
+from frontend.ui_util import avatar, get_author, log_to_console
+from frontend.api import api_chat, api_tokenize
 
-st.title("Kino Chat Debugger")
+BASE_URL = "http://localhost:8000/kino"
+USER_ROLE = "nacho"
+KINO_ROLE = "kino"
+st.title("Kino Chat")
 
-# Input
-prompt = st.text_input("Enter a prompt:")
-model = st.selectbox("Choose a model", [
-    "nous-hermes2:10.7b-solar-fp16",
-    "wizardlm-uncensored:13b-llama2-fp16",
-    "dolphin3:8b-llama3.1-fp16"
-])
-send = st.button("Send")
+# Initialize session state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# Model selection
+col1, col2 = st.columns([2, 1])
+with col1:
+    selected_name = st.selectbox("Choose a model", list(MODEL_MAP.keys()))
+    model_info = MODEL_MAP[selected_name]
+    model = model_info["model"]
+with col2:
+    st.metric("Context Limit", f"{model_info['context']} tokens")
+
+# Display chat messages from history on app rerun
+for message in st.session_state.chat_history:
+    with st.chat_message(message["role"], avatar=avatar(message)):
+        st.markdown(get_author(message["role"]) + message["content"])
+
+# Placeholder for token usage progress bar
+progress_placeholder = st.empty()
 
 # Request + Response
-if send and prompt:
-    payload = {"prompt": prompt, "model": model}
-    response = requests.post(f"{BASE_URL}/chat/", json=payload)
+if prompt := st.chat_input("Type your message and hit Enter"):
+    # Trigger token count backend call
+    token_info = api_tokenize(prompt, model)
 
-    st.subheader("📤 Request Payload")
-    st.json(payload)
+    # Display token usage
+    usage_pct = min(token_info["tokens"] / token_info["max_context"], 1.0)
+    progress_placeholder.progress(usage_pct, text=f"{token_info['tokens']} / {token_info['max_context']} tokens")
 
-    st.subheader("📥 Raw Response")
-    try:
-        st.json(response.json())
-    except Exception:
-        st.text(response.text)
+    # Display user message in chat message container
+    with st.chat_message(USER_ROLE, avatar=avatar(USER_ROLE)):
+        st.markdown(get_author(USER_ROLE) + prompt)
+
+    # Add user message to chat history
+    st.session_state.chat_history.append({"role": USER_ROLE, "content": prompt})
+
+    # Trigger model response backend call
+    reply = api_chat(prompt, model)
+
+    # Display kino response in chat message container
+    with st.chat_message(KINO_ROLE, avatar=avatar(KINO_ROLE)):
+        st.markdown(get_author(KINO_ROLE) + reply)
+
+    # Add kino response to chat history
+    st.session_state.chat_history.append({"role": KINO_ROLE, "content": reply})

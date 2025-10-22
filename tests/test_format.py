@@ -1,4 +1,4 @@
-from app.format import clean_prompt
+from app.utils.preprocess import clean_prompt
 
 def test_clean_prompt_basic():
     assert clean_prompt("  Hello  ") == "Hello"

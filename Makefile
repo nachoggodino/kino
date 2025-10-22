@@ -6,7 +6,7 @@ run-back:
 
 # === FRONTEND ===
 run-front:
-	cd frontend && streamlit run main.py
+	PYTHONPATH=. streamlit run frontend/main.py
 
 # === COMBINED ===
 kino:
@@ -16,6 +16,28 @@ kino:
 # === TESTS ===
 test:
 	PYTHONPATH=./app pytest -v --tb=short
+
+# === STOP BACKEND ===
+stop-back:
+	@pkill -f "uvicorn"
+
+# === STOP FRONTEND ===
+stop-front:
+	@pkill -f "streamlit"
+
+# === STOP ALL ===
+stop-all:
+	@make stop-back
+	@make stop-front
+	@echo "🛑 Kino backend and frontend stopped."
+
+# === RESTART ALL ===
+restart:
+	@make stop-all
+	@sleep 1
+	@make run-back
+	@make run-front
+	@echo "🔄 Kino restarted."
 
 # === CLEAN CACHE ===
 clean:
